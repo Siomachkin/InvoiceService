@@ -30,6 +30,8 @@ services:
       REDIS_PORT: ${REDIS_PORT}
       REDIS_BRPOP_TIMEOUT: ${REDIS_BRPOP_TIMEOUT}
       REDIS_QUEUE_NAME: 'queue_invoice'
+      GOOGLE_APPLICATION_CREDENTIALS: docker/google-api.json
+      GOOGLE_BUCKET_NAME: ${GOOGLE_BUCKET_NAME}
     depends_on:
       - redis
       - mongo
@@ -49,6 +51,9 @@ services:
       REDIS_PORT: ${REDIS_PORT}
       REDIS_BRPOP_TIMEOUT: ${REDIS_BRPOP_TIMEOUT}
       REDIS_QUEUE_NAME: 'queue_email'
+      GOOGLE_APPLICATION_CREDENTIALS: docker/google-api.json
+      GOOGLE_BUCKET_NAME: ${GOOGLE_BUCKET_NAME}
+
     depends_on:
       - redis
       - mongo

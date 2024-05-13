@@ -1,34 +1,48 @@
 <?php
 namespace InvoiceService\Services;
 
+use InvoiceService\Contracts\CloudStorageInterface;
 use InvoiceService\Contracts\InvoiceGeneratorInterface;
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
 
 class MpdfInvoiceGenerator implements InvoiceGeneratorInterface
 {
+    private $cloudStorage;
+
+    public function __construct(CloudStorageInterface $cloudStorage)
+    {
+        $this->cloudStorage = $cloudStorage;
+    }
+
+
     public function generate(array $invoiceData): string
     {
         $mpdf = new Mpdf();
 
-        $createdAt = $invoiceData['invoice_date']->toDateTime();
-        $formattedDate = $createdAt->format('F j, Y');
+        $tempPdfFilePath = tempnam(sys_get_temp_dir(), 'invoice') . '.pdf';
+        $mpdf->Output($tempPdfFilePath, Destination::FILE);
 
-        $total = array_reduce($invoiceData['items'], function ($carry, $item) {
-            return $carry + $item['amount'];
-        }, 0);
-
-
-        $htmlContent = $this->generateHtmlContent($invoiceData, $formattedDate, $total);
-        $mpdf->WriteHTML($htmlContent);
-
-        $pdfFilePath = $this->determinePdfFilePath($invoiceData['invoice_number']);
-        $mpdf->Output($pdfFilePath, Destination::FILE);
-
-        if (!file_exists($pdfFilePath)) {
-            throw new \Exception('File not found: ' . $pdfFilePath);
+        if (!file_exists($tempPdfFilePath)) {
+            throw new \Exception('Unable to save the invoice PDF to temporary file.');
         }
-        return $pdfFilePath;
+
+        $cloudPdfFilePath = "invoices/{$invoiceData['invoice_number']}.pdf";
+        $publicUrl = $this->uploadFileToCloud($tempPdfFilePath, $cloudPdfFilePath);
+
+        unlink($tempPdfFilePath);
+
+        return $publicUrl;
+    }
+
+    private function uploadFileToCloud(string $localFilePath, string $cloudFilePath): string
+    {
+        try {
+            $publicUrl = $this->cloudStorage->upload($localFilePath, $cloudFilePath);
+            return $publicUrl;
+        } catch (\Exception $e) {
+            throw new \Exception('Failed to upload the invoice PDF to cloud storage: ' . $e->getMessage(), 0, $e);
+        }
     }
 
     protected function generateHtmlContent(array $invoiceData, string $formattedDate, float $total): string
@@ -129,16 +143,5 @@ class MpdfInvoiceGenerator implements InvoiceGeneratorInterface
         </html>';
 
         return $htmlContent;
-    }
-    protected function determinePdfFilePath(string $invoiceNumber): string
-    {
-        $year = date("Y");
-        $month = date("m");
-        $invoicesDirectory = __DIR__ . "/../invoices/{$year}/{$month}/";
-
-        if (!file_exists($invoicesDirectory)) {
-            mkdir($invoicesDirectory, 0755, true);
-        }
-        return $invoicesDirectory . 'invoice_' . $invoiceNumber . '.pdf';
     }
 }

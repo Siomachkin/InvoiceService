@@ -8,17 +8,19 @@ use InvoiceService\JobQueueSystem\Contracts\JobInterface;
 use InvoiceService\JobQueueSystem\Jobs\GeneratePdfJob;
 use InvoiceService\JobQueueSystem\Jobs\SendEmailJob;
 use InvoiceService\Repositories\MongoInvoiceRepository;
-use InvoiceService\Services\MailerService;
 
-class JobFactory {
+class JobFactory
+{
 
     private Container $container;
 
-    public function __construct(Container $container) {
+    public function __construct(Container $container)
+    {
         $this->container = $container;
     }
 
-    public function createJob($type, $data) : JobInterface {
+    public function createJob($type, $data): JobInterface
+    {
         switch ($type) {
             case 'generate_pdf':
                 $pdfJob = $this->container->make(GeneratePdfJob::class, ['data' => $data]);
@@ -28,8 +30,7 @@ class JobFactory {
                 $pdfJob->attach($invoiceRepository);
                 return $pdfJob;
             case 'send_email':
-                $mailer = new MailerService();
-                $mailerJob = new SendEmailJob($data, $mailer);
+                $mailerJob = $this->container->make(SendEmailJob::class, ['data' => $data]);
                 return $mailerJob;
             default:
                 throw new \InvalidArgumentException("Unknown job type: " . $type);
