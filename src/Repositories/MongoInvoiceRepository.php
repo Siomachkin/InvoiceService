@@ -4,25 +4,26 @@ namespace InvoiceService\Repositories;
 
 use InvoiceService\Contracts\InvoiceRepositoryInterface;
 use InvoiceService\Contracts\CacheServiceInterface;
+use InvoiceService\EventsSystem\Contracts\ObserverInterface;
+use InvoiceService\EventsSystem\Contracts\SubjectInterface;
+use InvoiceService\JobQueueSystem\Jobs\GeneratePdfJob;
 use InvoiceService\Traits\MongoConnectionTrait;
 use InvoiceService\Models\ClientModel;
 use InvoiceService\Models\CompanyModel;
 use InvoiceService\Models\InvoiceModel;
 use MongoDB\Model\BSONDocument;
 
-class MongoInvoiceRepository implements InvoiceRepositoryInterface
+class MongoInvoiceRepository implements InvoiceRepositoryInterface, ObserverInterface
 {
     use MongoConnectionTrait;
+    private CacheServiceInterface $cacheService;
+    private ClientModel $clientModel;
+    private CompanyModel $companyModel;
+    private InvoiceModel $invoiceModel;
 
-    private $databaseName;
-    private $cacheService;
-    private $clientModel;
-    private $companyModel;
-    private $invoiceModel;
-
-    public function __construct(CacheServiceInterface $cacheService, $databaseName = 'invoiceServiceDatabase',)
+    public function __construct(CacheServiceInterface $cacheService)
     {
-        $this->connectToMongo($databaseName);
+        $this->connectToMongo();
         $this->cacheService = $cacheService;
         $this->initializeModels();
     }
@@ -67,5 +68,13 @@ class MongoInvoiceRepository implements InvoiceRepositoryInterface
     {
         $this->invoiceModel->updateInvoicePath($invoiceNumber, $invoicePath);
     }
-    
+
+    public function onEvent(SubjectInterface $subject): void
+    {
+        if ($subject instanceof GeneratePdfJob) {
+            $invoicePath = $subject->getPdfPath();
+            $invoiceNumber = $subject->getInvoiceNumber();
+            $this->updateInvoicePath($invoiceNumber, $invoicePath);
+        }
+    }
 }

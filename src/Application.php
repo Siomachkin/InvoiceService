@@ -1,32 +1,17 @@
 <?php
 namespace InvoiceService;
 
-use InvoiceService\Services\MailerService;
-use InvoiceService\Services\RedisCacheService;
-use InvoiceService\Services\MpdfInvoiceGenerator;
-use InvoiceService\Repositories\MongoInvoiceRepository;
+
 use InvoiceService\Controllers\InvoiceController;
 
 class Application
 {
-    private $mailerService;
-    private $invoiceGenerator;
-    private $cacheService;
-    private $invoiceRepository;
-    private $invoiceController;
+    private InvoiceController $invoiceController;
 
-    public function __construct()
+
+    public function __construct($container)
     {
-        $this->mailerService = new MailerService();
-        $this->invoiceGenerator = new MpdfInvoiceGenerator();
-        $this->cacheService = new RedisCacheService();
-        $this->invoiceRepository = new MongoInvoiceRepository($this->cacheService);
-
-        $this->invoiceController = new InvoiceController(
-            $this->mailerService,
-            $this->invoiceGenerator,
-            $this->invoiceRepository
-        );
+        $this->invoiceController = $container->get(InvoiceController::class);
     }
 
     public function run()
@@ -45,6 +30,7 @@ class Application
 
     private function handlePostRequest()
     {
+
         $email = $_POST['email'] ?? null;
         $workItems = $_POST['workItems'] ?? [];
 

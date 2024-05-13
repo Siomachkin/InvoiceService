@@ -28,7 +28,6 @@ class MpdfInvoiceGenerator implements InvoiceGeneratorInterface
         if (!file_exists($pdfFilePath)) {
             throw new \Exception('File not found: ' . $pdfFilePath);
         }
-
         return $pdfFilePath;
     }
 
@@ -140,7 +139,6 @@ class MpdfInvoiceGenerator implements InvoiceGeneratorInterface
         if (!file_exists($invoicesDirectory)) {
             mkdir($invoicesDirectory, 0755, true);
         }
-
         return $invoicesDirectory . 'invoice_' . $invoiceNumber . '.pdf';
     }
 }

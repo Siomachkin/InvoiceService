@@ -3,6 +3,8 @@
 require __DIR__ . "/vendor/autoload.php";
 
 use InvoiceService\Application;
+use InvoiceService\ServiceContainer;
 
-$app = new Application();
+$container = ServiceContainer::buildContainer();
+$app = new Application($container);
 $app->run();

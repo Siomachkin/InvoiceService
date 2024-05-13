@@ -2,31 +2,27 @@
 
 namespace InvoiceService\Controllers;
 
-use InvoiceService\Contracts\MailerInterface;
-use InvoiceService\Contracts\InvoiceGeneratorInterface;
-use InvoiceService\Contracts\InvoiceRepositoryInterface;
-use InvoiceService\Contracts\LoggerInterface;
 
-class InvoiceController
+use InvoiceService\EventsSystem\Contracts\ObserverInterface;
+use InvoiceService\EventsSystem\Contracts\SubjectInterface;
+use InvoiceService\JobQueueSystem\Contracts\QueueManagerInterface;
+use InvoiceService\Contracts\InvoiceRepositoryInterface;
+use InvoiceService\JobQueueSystem\Jobs\GeneratePdfJob;
+
+class InvoiceController implements ObserverInterface
 {
-    private $mailer;
-    private $invoiceGenerator;
     private $invoiceRepository;
     private $logger;
 
-    public function __construct(
-        MailerInterface $mailer,
-        InvoiceGeneratorInterface $invoiceGenerator,
-        InvoiceRepositoryInterface $invoiceRepository,
-        //LoggerInterface $logger
-    ) {
-        $this->mailer = $mailer;
-        $this->invoiceGenerator = $invoiceGenerator;
+    private $queueManager;
+
+    public function __construct(InvoiceRepositoryInterface $invoiceRepository, QueueManagerInterface $queueManager)
+    {   
         $this->invoiceRepository = $invoiceRepository;
-        //$this->logger = $logger;
+        $this->queueManager = $queueManager;
     }
 
-    public function createAndSendInvoice(string $email, array $workItems) : array
+    public function createAndSendInvoice(string $email, array $workItems): array
     {
 
         //$this->logger->info("");
@@ -39,31 +35,39 @@ class InvoiceController
             return ['status' => 'error', 'message' => 'Failed to create invoice.'];
         }
 
-        $invoiceData = [
-            'invoice_number' => $invoice['invoice_number'],
-            'invoice_date' => $invoice['created_at'],
-            'client' => $clientData,
-            'company' => $companyData,
-            'items' => $workItems
+        $invoiceJobData = [
+            'type' => 'generate_pdf',
+            'data' => [
+                'invoice_number' => $invoice['invoice_number'],
+                'invoice_date' => $invoice['created_at'],
+                'client' => $clientData,
+                'company' => $companyData,
+                'items' => $workItems
+            ],
         ];
 
-        $pdfDocumentPath = $this->invoiceGenerator->generate($invoiceData);
-
-        //$this->showPdfInBrowser($pdfDocumentPath);
-
-        $this->invoiceRepository->updateInvoicePath($invoice['invoice_number'], $pdfDocumentPath);
-
-        //$this->mailer->send($email, 'Invoice', 'Please find attached your invoice.', $pdfDocumentPath);
+        $this->queueManager->enqueueJob('queue_invoice', $invoiceJobData);
 
         return ['status' => 'success', 'message' => 'Invoice created and email sent.'];
     }
 
-    public function showPdfInBrowser(string $pdfFilePath): void
+    public function onEvent(SubjectInterface $subject): void
     {
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: inline; filename="' . basename($pdfFilePath) . '"');
-        header('Content-Length: ' . filesize($pdfFilePath));
-        readfile($pdfFilePath);
-    }
+        if ($subject instanceof GeneratePdfJob) {
+            $pdfDocumentPath = $subject->getPdfPath();
+            $email = $subject->getEmail();
 
+            $emailJobData = [
+                'type' => 'send_email',
+                'data' => [
+                    'email' => $email,
+                    'subject' => 'Your Invoice',
+                    'message' => 'Please see the attached invoice.',
+                    'attachmentPath' => $pdfDocumentPath,
+                ],
+            ];
+            
+            $this->queueManager->enqueueJob('queue_email', $emailJobData);
+        }
+    }
 }
