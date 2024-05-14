@@ -12,19 +12,20 @@ class MonologLoggerService implements LoggerInterface
 
     public function __construct()
     {
+        $logFile = getenv('LOG_FILE');
         $channel = 'app';
-        $logFilePath = __DIR__ . '/../logs/app.log';
+        $logFilePath = __DIR__ . '/../logs/'. $logFile;
         $this->logger = new Logger($channel);
         $this->logger->pushHandler(new StreamHandler($logFilePath, Logger::DEBUG));
     }
 
-    public function info($message): void
+    public function info($message, array $context = []): void
     {
-        $this->logger->info($message);
+        $this->logger->info($message, $context);
     }
 
-    public function error($message): void
+    public function error($message, array $context = []): void
     {
-        $this->logger->error($message);
+        $this->logger->error($message, $context);
     }
 }

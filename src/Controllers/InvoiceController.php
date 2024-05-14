@@ -3,6 +3,7 @@
 namespace InvoiceService\Controllers;
 
 
+use InvoiceService\Contracts\LoggerInterface;
 use InvoiceService\EventsSystem\Contracts\ObserverInterface;
 use InvoiceService\EventsSystem\Contracts\SubjectInterface;
 use InvoiceService\JobQueueSystem\Contracts\QueueManagerInterface;
@@ -11,21 +12,22 @@ use InvoiceService\JobQueueSystem\Jobs\GeneratePdfJob;
 
 class InvoiceController implements ObserverInterface
 {
-    private $invoiceRepository;
+    private InvoiceRepositoryInterface $invoiceRepository;
     private $logger;
 
     private $queueManager;
 
-    public function __construct(InvoiceRepositoryInterface $invoiceRepository, QueueManagerInterface $queueManager)
+    public function __construct(InvoiceRepositoryInterface $invoiceRepository, QueueManagerInterface $queueManager, LoggerInterface $logger)
     {   
         $this->invoiceRepository = $invoiceRepository;
         $this->queueManager = $queueManager;
+        $this->logger = $logger;
     }
 
     public function createAndSendInvoice(string $email, array $workItems): array
     {
-
-        //$this->logger->info("");
+        $this->logger->info("Invoice requested", [$email, $workItems]);
+        $this->invoiceRepository->logInsert($email,$workItems,'InvoiceRequested');
 
         $clientData = $this->invoiceRepository->findClientByEmail($email);
         $companyData = $this->invoiceRepository->findCompanyByClientEmail($email);

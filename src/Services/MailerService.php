@@ -35,11 +35,14 @@ class MailerService implements MailerInterface
             $message['attachment'] = [
                 ['filePath' => $attachment, 'filename' => 'Invoice']
             ];
+        } else {
+            $this->logger->error("Email sending failed: attachment file is missing");
+            return false;
         }
 
         try {
-            $response = $this->mailgun->messages()->send($this->domain, $message);
-            return true;         
+            $this->mailgun->messages()->send($this->domain, $message);
+            return true;
         } catch (\Exception $e) {
             $this->logger->error("Email sending failed: " . $e->getMessage());
             return false;

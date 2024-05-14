@@ -1,7 +1,9 @@
 <?php
+
 namespace InvoiceService\Contracts;
+
 interface LoggerInterface
 {
-    public function info($message): void;
-    public function error($message): void;
+    public function info($message, array $context = []): void;
+    public function error($message, array $context = []): void;
 }

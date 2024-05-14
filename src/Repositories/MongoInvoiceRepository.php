@@ -7,6 +7,7 @@ use InvoiceService\Contracts\CacheServiceInterface;
 use InvoiceService\EventsSystem\Contracts\ObserverInterface;
 use InvoiceService\EventsSystem\Contracts\SubjectInterface;
 use InvoiceService\JobQueueSystem\Jobs\GeneratePdfJob;
+use InvoiceService\Models\LogModel;
 use InvoiceService\Traits\MongoConnectionTrait;
 use InvoiceService\Models\ClientModel;
 use InvoiceService\Models\CompanyModel;
@@ -20,6 +21,7 @@ class MongoInvoiceRepository implements InvoiceRepositoryInterface, ObserverInte
     private ClientModel $clientModel;
     private CompanyModel $companyModel;
     private InvoiceModel $invoiceModel;
+    private LogModel $logModel;
 
     public function __construct(CacheServiceInterface $cacheService)
     {
@@ -33,10 +35,12 @@ class MongoInvoiceRepository implements InvoiceRepositoryInterface, ObserverInte
         $clientsCollection = $this->client->selectCollection($this->databaseName, 'clients');
         $companiesCollection = $this->client->selectCollection($this->databaseName, 'companies');
         $invoiceCollection = $this->client->selectCollection($this->databaseName, 'invoices');
+        $logsCollection = $this->client->selectCollection($this->databaseName, 'operation_logs');
 
         $this->clientModel = new ClientModel($clientsCollection);
         $this->companyModel = new CompanyModel($companiesCollection);
         $this->invoiceModel = new InvoiceModel($invoiceCollection);
+        $this->logModel = new LogModel($logsCollection);
     }
 
     public function findClientByEmail($email): ?BSONDocument
@@ -67,6 +71,11 @@ class MongoInvoiceRepository implements InvoiceRepositoryInterface, ObserverInte
     public function updateInvoicePath(int $invoiceNumber, string $invoicePath): void
     {
         $this->invoiceModel->updateInvoicePath($invoiceNumber, $invoicePath);
+    }
+
+    public function logInsert(string $email, array $workItems, string $operationType): void
+    {
+        $this->logModel->logInsert($email, $workItems, $operationType);
     }
 
     public function onEvent(SubjectInterface $subject): void

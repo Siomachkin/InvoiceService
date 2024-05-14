@@ -1,3 +1,4 @@
 vendor/
+logs/
 docker/google-api.json
 .env

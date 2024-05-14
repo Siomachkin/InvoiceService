@@ -12,6 +12,7 @@ services:
       REDIS_SCHEME: ${REDIS_SCHEME}
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
+      LOG_FILE: 'app.log'
     ports:
       - "8000:80"
 
@@ -32,6 +33,7 @@ services:
       REDIS_QUEUE_NAME: 'queue_invoice'
       GOOGLE_APPLICATION_CREDENTIALS: docker/google-api.json
       GOOGLE_BUCKET_NAME: ${GOOGLE_BUCKET_NAME}
+      LOG_FILE: 'invoice-worker.log'
     depends_on:
       - redis
       - mongo
@@ -56,6 +58,7 @@ services:
       MAIL_KEY: ${MAIL_KEY}
       MAIL_DOMAIN: ${MAIL_DOMAIN}
       MAIL_FROM_EMAIL: ${MAIL_FROM_EMAIL} 
+      LOG_FILE: 'email-worker.log'
     depends_on:
       - redis
       - mongo

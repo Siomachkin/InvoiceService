@@ -3,16 +3,20 @@ namespace InvoiceService\Services;
 
 use InvoiceService\Contracts\CloudStorageInterface;
 use InvoiceService\Contracts\InvoiceGeneratorInterface;
+use InvoiceService\Contracts\LoggerInterface;
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
 
 class MpdfInvoiceGenerator implements InvoiceGeneratorInterface
 {
-    private $cloudStorage;
+    private CloudStorageInterface $cloudStorage;
+    private LoggerInterface $logger;
 
-    public function __construct(CloudStorageInterface $cloudStorage)
+
+    public function __construct(CloudStorageInterface $cloudStorage, LoggerInterface $logger)
     {
         $this->cloudStorage = $cloudStorage;
+        $this->logger = $logger;
     }
 
 
@@ -40,6 +44,7 @@ class MpdfInvoiceGenerator implements InvoiceGeneratorInterface
         $publicUrl = $this->uploadFileToCloud($tempPdfFilePath, $cloudPdfFilePath);
 
         unlink($tempPdfFilePath);
+        $this->logFileUpload($cloudPdfFilePath, $publicUrl);
 
         return $publicUrl;
     }
@@ -50,8 +55,22 @@ class MpdfInvoiceGenerator implements InvoiceGeneratorInterface
             $publicUrl = $this->cloudStorage->upload($localFilePath, $cloudFilePath);
             return $publicUrl;
         } catch (\Exception $e) {
+            $this->logger->error('Failed to upload the invoice PDF to cloud storage: ' . $e->getMessage(), [
+                'localFilePath' => $localFilePath,
+                'cloudFilePath' => $cloudFilePath,
+            ]);
             throw new \Exception('Failed to upload the invoice PDF to cloud storage: ' . $e->getMessage(), 0, $e);
         }
+    }
+
+    private function logFileUpload(string $cloudPdfFilePath, string $publicUrl): void
+    {
+        $logMessage = "File successfully created and uploaded to Google Cloud.";
+        $logContext = [
+            'cloudPath' => $cloudPdfFilePath,
+            'publicUrl' => $publicUrl,
+        ];
+        $this->logger->info($logMessage, $logContext);
     }
 
     protected function generateHtmlContent(array $invoiceData, string $formattedDate, float $total): string
@@ -132,13 +151,13 @@ class MpdfInvoiceGenerator implements InvoiceGeneratorInterface
                     <tbody>';
 
         foreach ($invoiceData['items'] as $item) {
-            $htmlContent .= '<tr><td>' . $item['description'] . '</td><td>$' . number_format($item['amount'], 2) . '</td></tr>';
+            $htmlContent .= '<tr><td>' . $item['description'] . '</td><td style="text-align: right;">$' . number_format($item['amount'], 2) . '</td></tr>';
         }
 
         $htmlContent .= '
                     <tr>
                         <td class="total-due">Total Due:</td>
-                        <td class="total-due">$' . number_format($total, 2) . '</td>
+                        <td class="total-due" style="text-align: right;">$' . number_format($total, 2) . '</td>
                     </tr>
                     </tbody>
                 </table>
