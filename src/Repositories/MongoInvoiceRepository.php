@@ -3,7 +3,6 @@
 namespace InvoiceService\Repositories;
 
 use InvoiceService\Contracts\InvoiceRepositoryInterface;
-use InvoiceService\Contracts\CacheServiceInterface;
 use InvoiceService\EventsSystem\Contracts\ObserverInterface;
 use InvoiceService\EventsSystem\Contracts\SubjectInterface;
 use InvoiceService\JobQueueSystem\Jobs\GeneratePdfJob;
@@ -17,16 +16,14 @@ use MongoDB\Model\BSONDocument;
 class MongoInvoiceRepository implements InvoiceRepositoryInterface, ObserverInterface
 {
     use MongoConnectionTrait;
-    private CacheServiceInterface $cacheService;
     private ClientModel $clientModel;
     private CompanyModel $companyModel;
     private InvoiceModel $invoiceModel;
     private LogModel $logModel;
 
-    public function __construct(CacheServiceInterface $cacheService)
+    public function __construct()
     {
         $this->connectToMongo();
-        $this->cacheService = $cacheService;
         $this->initializeModels();
     }
 
@@ -45,17 +42,7 @@ class MongoInvoiceRepository implements InvoiceRepositoryInterface, ObserverInte
 
     public function findClientByEmail($email): ?BSONDocument
     {
-        $cachedClient = $this->cacheService->get('client:' . $email);
-        if ($cachedClient) {
-            return new BSONDocument(json_decode($cachedClient, true));
-        }
-
-        $client = $this->clientModel->findOne(['email' => $email]);
-        if ($client) {
-            $this->cacheService->set('client:' . $email, json_encode($client->getArrayCopy()), 86400);
-        }
-
-        return $client;
+        return $this->clientModel->findOne(['email' => $email]);
     }
 
     public function findCompanyByClientEmail($email): ?BSONDocument

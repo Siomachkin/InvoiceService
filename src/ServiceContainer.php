@@ -13,6 +13,7 @@ use InvoiceService\JobQueueSystem\Contracts\QueueManagerInterface;
 use InvoiceService\JobQueueSystem\Jobs\SendEmailJob;
 use InvoiceService\JobQueueSystem\RedisQueueManager;
 use InvoiceService\JobQueueSystem\Jobs\GeneratePdfJob;
+use InvoiceService\Repositories\CachedInvoiceRepositoryProxy;
 use InvoiceService\Services\GoogleCloudStorageService;
 use InvoiceService\Services\MailerService;
 use InvoiceService\Services\MonologLoggerService;
@@ -32,11 +33,17 @@ class ServiceContainer
         $containerBuilder->addDefinitions([
             InvoiceGeneratorInterface::class => autowire(MpdfInvoiceGenerator::class),
             CacheServiceInterface::class => autowire(RedisCacheService::class),
-            InvoiceRepositoryInterface::class => autowire(MongoInvoiceRepository::class),
             MailerInterface::class => autowire(MailerService::class),
             QueueManagerInterface::class => autowire(RedisQueueManager::class),
             CloudStorageInterface::class => autowire(GoogleCloudStorageService::class),
             LoggerInterface::class => autowire(MonologLoggerService::class),
+
+            MongoInvoiceRepository::class => autowire(MongoInvoiceRepository::class),
+            InvoiceRepositoryInterface::class => factory(function (Container $container) {
+                $mongoInvoiceRepository = $container->get(MongoInvoiceRepository::class);
+                $cacheService = $container->get(CacheServiceInterface::class);
+                return new CachedInvoiceRepositoryProxy($mongoInvoiceRepository, $cacheService);
+            }),
 
             GeneratePdfJob::class => factory(function (Container $container, $data) {
                 $invoiceGenerator = $container->get(MpdfInvoiceGenerator::class);
