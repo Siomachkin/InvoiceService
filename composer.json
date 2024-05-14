@@ -9,7 +9,10 @@
         "mongodb/mongodb": "^1.18",
         "predis/predis": "^2.2",
         "php-di/php-di": "^7.0",
-        "google/cloud-storage": "^1.41"
+        "google/cloud-storage": "^1.41",
+        "mailgun/mailgun-php": "^4.2",
+        "kriswallsmith/buzz": "^0.15.0",
+        "nyholm/psr7": "^1.8"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.0",
@@ -21,7 +24,10 @@
         }
     },
     "config": {
-        "optimize-autoloader": true
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
     },
     "scripts": {
         "test": "phpunit --configuration phpunit.xml"

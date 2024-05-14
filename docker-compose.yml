@@ -53,7 +53,9 @@ services:
       REDIS_QUEUE_NAME: 'queue_email'
       GOOGLE_APPLICATION_CREDENTIALS: docker/google-api.json
       GOOGLE_BUCKET_NAME: ${GOOGLE_BUCKET_NAME}
-
+      MAIL_KEY: ${MAIL_KEY}
+      MAIL_DOMAIN: ${MAIL_DOMAIN}
+      MAIL_FROM_EMAIL: ${MAIL_FROM_EMAIL} 
     depends_on:
       - redis
       - mongo

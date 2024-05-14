@@ -29,14 +29,32 @@ class GoogleCloudStorageService implements CloudStorageInterface
 
     public function upload(string $sourceFilePath, string $destinationPath): string
     {
+        $file = fopen($sourceFilePath, 'r');
+        if (!$file) {
+            throw new \RuntimeException("Unable to open file for reading: {$sourceFilePath}");
+        }
+
         try {
-            $file = fopen($sourceFilePath, 'r');
             $object = $this->bucket->upload($file, [
                 'name' => $destinationPath
             ]);
-            fclose($file);
-            return $object->info()['mediaLink'];
+
+            if (is_resource($file)) {
+                fclose($file);
+            }
+
+            $expiresAt = new \DateTime('+1 week');
+            $options = [
+                'version' => 'v4'
+            ];
+            $signedUrl = $object->signedUrl($expiresAt, $options);
+
+            return $signedUrl;
+            
         } catch (\Exception $e) {
+            if (is_resource($file)) {
+                fclose($file);
+            }
             throw new \RuntimeException(sprintf('Error uploading file to Google Cloud Storage: %s', $e->getMessage()), 0, $e);
         }
     }

@@ -62,8 +62,8 @@ class InvoiceController implements ObserverInterface
                 'data' => [
                     'email' => $email,
                     'subject' => 'Your Invoice',
-                    'message' => 'Please see the attached invoice.',
-                    'attachmentPath' => $pdfDocumentPath,
+                    'body' => 'Please see the attached invoice.',
+                    'attachment' => $pdfDocumentPath,
                 ],
             ];
             

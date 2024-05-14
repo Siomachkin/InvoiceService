@@ -20,6 +20,15 @@ class MpdfInvoiceGenerator implements InvoiceGeneratorInterface
     {
         $mpdf = new Mpdf();
 
+        $createdAt = $invoiceData['invoice_date']->toDateTime();
+        $formattedDate = $createdAt->format('F j, Y');
+        $total = array_reduce($invoiceData['items'], function ($carry, $item) {
+            return $carry + $item['amount'];
+        }, 0);
+
+        $htmlContent = $this->generateHtmlContent($invoiceData, $formattedDate, $total);
+        $mpdf->WriteHTML($htmlContent);
+
         $tempPdfFilePath = tempnam(sys_get_temp_dir(), 'invoice') . '.pdf';
         $mpdf->Output($tempPdfFilePath, Destination::FILE);
 
