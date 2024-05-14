@@ -27,6 +27,12 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 RUN composer install --no-scripts --no-autoloader
 
+
+RUN a2enmod rewrite headers
+
+COPY myapp.conf /etc/apache2/sites-available/myapp.conf
+RUN a2ensite myapp.conf
+
 COPY . /var/www/html/
 
 RUN composer dump-autoload --optimize

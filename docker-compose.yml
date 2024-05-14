@@ -72,3 +72,12 @@ services:
     image: redis
     ports:
       - "6379:6379"
+
+  swagger-ui:
+     image: swaggerapi/swagger-ui
+     environment:
+       SWAGGER_JSON: /docs/openapi.json
+     volumes:
+       - ./openapi.json:/docs/openapi.json
+     ports:
+       - "8080:8080"

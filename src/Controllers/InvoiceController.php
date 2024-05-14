@@ -33,7 +33,11 @@ class InvoiceController implements ObserverInterface
         $companyData = $this->invoiceRepository->findCompanyByClientEmail($email);
         $invoice = $this->invoiceRepository->createInvoice($email);
 
-        if (!$invoice || !$clientData || !$companyData) {
+        if (!$clientData || !$companyData) {
+            return ['status' => 'error', 'message' => 'Client was not found.'];
+        }
+
+        if (!$invoice) {
             return ['status' => 'error', 'message' => 'Failed to create invoice.'];
         }
 
