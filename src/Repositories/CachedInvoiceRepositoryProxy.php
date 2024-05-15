@@ -68,4 +68,14 @@ class CachedInvoiceRepositoryProxy implements InvoiceRepositoryInterface
     {
         $this->invoiceRepository->logInsert($email, $workItems, $operationType);
     }
+
+    public function getUnsentInvoices(): array
+    {
+        return $this->invoiceRepository->getUnsentInvoices();
+    }
+
+    public function isInvoiceUnsent(int $invoiceNumber): bool
+    {
+        return $this->invoiceRepository->isInvoiceUnsent($invoiceNumber);
+    }
 }

@@ -22,7 +22,7 @@ class MailerService implements MailerInterface
         $this->logger = $logger;
     }
 
-    public function send($to, $subject, $body, $attachment = null): bool
+    public function send($to, $subject, $body, $attachment): bool
     {
         $message = [
             'from' => $this->fromEmail,
@@ -31,15 +31,10 @@ class MailerService implements MailerInterface
             'text' => $body
         ];
 
-        if ($attachment) {
-            $message['attachment'] = [
-                ['filePath' => $attachment, 'filename' => 'Invoice']
-            ];
-        } else {
-            $this->logger->error("Email sending failed: attachment file is missing");
-            return false;
-        }
-
+        $message['attachment'] = [
+            ['filePath' => $attachment, 'filename' => 'Invoice']
+        ];
+        
         try {
             $this->mailgun->messages()->send($this->domain, $message);
             return true;

@@ -6,6 +6,7 @@ use InvoiceService\Contracts\InvoiceRepositoryInterface;
 use InvoiceService\EventsSystem\Contracts\ObserverInterface;
 use InvoiceService\EventsSystem\Contracts\SubjectInterface;
 use InvoiceService\JobQueueSystem\Jobs\GeneratePdfJob;
+use InvoiceService\JobQueueSystem\Jobs\SendEmailJob;
 use InvoiceService\Models\LogModel;
 use InvoiceService\Traits\MongoConnectionTrait;
 use InvoiceService\Models\ClientModel;
@@ -65,12 +66,28 @@ class MongoInvoiceRepository implements InvoiceRepositoryInterface, ObserverInte
         $this->logModel->logInsert($email, $workItems, $operationType);
     }
 
+    public function getUnsentInvoices(): array
+    {
+        return $this->invoiceModel->getUnsentInvoices();
+    }
+
+    public function isInvoiceUnsent(int $invoiceNumber): bool
+    {
+        return $this->invoiceModel->isInvoiceUnsent($invoiceNumber);
+    }
+    
     public function onEvent(SubjectInterface $subject): void
     {
         if ($subject instanceof GeneratePdfJob) {
             $invoicePath = $subject->getPdfPath();
             $invoiceNumber = $subject->getInvoiceNumber();
             $this->updateInvoicePath($invoiceNumber, $invoicePath);
+        }
+
+        if ($subject instanceof SendEmailJob) {
+            $isSended = $subject->isSended();
+            $invoiceNumber = $subject->getInvoiceNumber();
+            $this->invoiceModel->setInvoiceSentStatus($invoiceNumber, $isSended);
         }
     }
 }

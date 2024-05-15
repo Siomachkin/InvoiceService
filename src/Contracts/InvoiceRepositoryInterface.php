@@ -11,4 +11,6 @@ interface InvoiceRepositoryInterface
     public function createInvoice(string $email): BSONDocument;
     public function updateInvoicePath(int $invoiceNumber, string $invoicePath): void;
     public function logInsert(string $email, array $workItems, string $operationType): void;
+    public function getUnsentInvoices(): array;
+    public function isInvoiceUnsent(int $invoiceNumber): bool;
 }

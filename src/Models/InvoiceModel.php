@@ -32,6 +32,34 @@ class InvoiceModel extends AbstractModel
 
     public function updateInvoicePath(int $invoiceNumber, string $invoicePath): void
     {
-        $this->updateOne(['invoice_number' => $invoiceNumber], ['invoice_path' => $invoicePath]);
+        $this->updateOne(
+            ['invoice_number' => $invoiceNumber], 
+            ['invoice_path' => $invoicePath]
+        );
+    }
+
+    public function setInvoiceSentStatus(int $invoiceNumber, bool $status): void
+    {
+        $this->updateOne(
+            ['invoice_number' => $invoiceNumber],
+            ['sended' => $status]
+        );
+    }
+
+    public function getUnsentInvoices(): array
+    {
+        $unsentInvoicesCursor = $this->collection->find(['sended' => false]);
+
+        return iterator_to_array($unsentInvoicesCursor);
+    }
+
+    public function isInvoiceUnsent(int $invoiceNumber): bool
+    {
+        $invoice = $this->collection->findOne([
+            'invoice_number' => $invoiceNumber,
+            'sended' => ['$ne' => true]
+        ]);
+
+        return !empty($invoice);
     }
 }

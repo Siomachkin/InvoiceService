@@ -52,7 +52,8 @@ class ServiceContainer
             
             SendEmailJob::class => factory(function (Container $container, $data) {
                 $mailerService = $container->get(MailerService::class);
-                return new SendEmailJob($data, $mailerService);
+                $invoiceRepository = $container->get(InvoiceRepositoryInterface::class);
+                return new SendEmailJob($data, $mailerService, $invoiceRepository);
             }),
         ]);
 

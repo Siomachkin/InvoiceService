@@ -62,10 +62,12 @@ class InvoiceController implements ObserverInterface
         if ($subject instanceof GeneratePdfJob) {
             $pdfDocumentPath = $subject->getPdfPath();
             $email = $subject->getEmail();
+            $invoiceNumber = $subject->getInvoiceNumber();
 
             $emailJobData = [
                 'type' => 'send_email',
                 'data' => [
+                    'invoice_number' =>  $invoiceNumber,
                     'email' => $email,
                     'subject' => 'Your Invoice',
                     'body' => 'Please see the attached invoice.',

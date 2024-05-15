@@ -63,6 +63,31 @@ services:
       - redis
       - mongo
 
+  resend-worker:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile.resendworker
+    volumes:
+      - .:/var/www
+    environment:
+      MONGO_HOST: ${MONGO_HOST}
+      MONGO_PORT: ${MONGO_PORT}
+      MONGO_DATABASE: ${MONGO_DATABASE}
+      REDIS_SCHEME: ${REDIS_SCHEME}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_BRPOP_TIMEOUT: ${REDIS_BRPOP_TIMEOUT}
+      REDIS_QUEUE_NAME: 'queue_email'
+      GOOGLE_APPLICATION_CREDENTIALS: docker/google-api.json
+      GOOGLE_BUCKET_NAME: ${GOOGLE_BUCKET_NAME}
+      MAIL_KEY: ${MAIL_KEY}
+      MAIL_DOMAIN: ${MAIL_DOMAIN}
+      MAIL_FROM_EMAIL: ${MAIL_FROM_EMAIL} 
+      LOG_FILE: 'resend-worker.log'
+    depends_on:
+      - redis
+      - mongo
+
   mongo:
     image: mongo
     ports:

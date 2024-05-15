@@ -31,6 +31,8 @@ class JobFactory
                 return $pdfJob;
             case 'send_email':
                 $mailerJob = $this->container->make(SendEmailJob::class, ['data' => $data]);
+                $invoiceRepository = $this->container->get(MongoInvoiceRepository::class);
+                $mailerJob->attach($invoiceRepository);
                 return $mailerJob;
             default:
                 throw new \InvalidArgumentException("Unknown job type: " . $type);
