@@ -1,3 +1,68 @@
+# Invoice Generation and Email Service
+
+This service generates invoices and sends them to clients via email.
+
+## Workflow
+
+### Client Request:
+
+The client sends an HTTP request to the service API, providing:
+The email address to which the invoice should be sent.
+A list of completed tasks and their costs.
+
+### Request Logging:
+
+The service logs the incoming request by creating a record in the MongoDB database.
+
+### Data Retrieval:
+
+The service retrieves additional information needed to generate the invoice from the database using the email as the key:
+Client information (first name, last name).
+Information about the company where the invoice recipient works.
+
+### Invoice Generation:
+
+The service generates a PDF document based on a template. The PDF includes:
+  - Client information.
+  - Total amount due.
+  - List of completed tasks and their costs.
+  - Invoice number.
+  - Invoice date.
+  - Sender information (name, address, etc.).
+
+### Email Delivery:
+
+The service sends the PDF document to the provided email address as an attachment via Mailgun.
+
+## Additional Features
+
+- **Database Server:**
+
+MongoDB is used as the database server.
+
+- **Email Service:**
+
+Emails are sent using the Mailgun service.
+
+- **Queue-Based Architecture:**
+
+  - The service uses a queue-based architecture for handling asynchronous tasks, including:
+    - PDF document generation.
+    - Email sending.
+
+- **Invoice Storage:**
+  - Invoices are stored in Google Cloud, and the client receives a temporary link to the invoice.
+
+## Architectural Principles
+
+- The architecture is based on SOLID principles.
+- Dependency Injection is utilized.
+- Various design patterns are implemented to ensure a robust and maintainable codebase.
+
+## Containerization
+
+- The entire service operates within Docker containers, ensuring consistent and portable environments for development, testing, and production.
+
 # Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
